@@ -16,7 +16,7 @@ const socialLinks = [
   },
   {
     platform: "Email",
-    url: "mailto:your-email@example.com",
+    url: "mailto:njugunabriian@gmail.com",
     icon: <Mail className="w-6 h-6 text-blue-600 hover:text-blue-800 transition-all duration-300" />,
   },
 ];
@@ -33,8 +33,8 @@ const projects = [
     link: "https://github.com/guy-with-a-cool-terminal/portfolio",
   },
   {
-    name: "TaskFlow",
-    desc: "Minimalistic task manager built with React and local storage.",
+    name: "GitItDone",
+    desc: "A Git-Workflow automation, CLI Tool that speeds up your git workflow.",
     link: "https://github.com/guy-with-a-cool-terminal/taskflow",
   },
 ];
