@@ -103,7 +103,7 @@ const App = () => {
             When I'm not coding, you can find me exploring Linux, system security, and contributing to open-source projects.
           </p>
           <a
-            href="https://drive.google.com/your-cv-link"
+            href="https://docs.google.com/document/d/1AzpAenefivF0MeBmlpGmeKgM94KQJhirmFFajVDQzu8/edit?usp=sharing"
             className="bg-blue-600 text-white px-6 py-3 rounded-lg mt-4 inline-block hover:bg-blue-700 transition"
           >
             View My CV
