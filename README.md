@@ -46,4 +46,4 @@ Now open [http://localhost:5173/](http://localhost:5173) to view the portfolio l
 
 You can reach me at:
 
-* **Email**: [njugunabriian@example.com](mailto:njugunabriian@gmail.com)
+* **Email**: [njugunabriian@gmail.com](mailto:njugunabriian@gmail.com)
