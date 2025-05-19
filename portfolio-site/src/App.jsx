@@ -25,7 +25,7 @@ const projects = [
   {
     name: "SecureVault",
     desc: "A password manager with GitHub secret scanning and encryption.",
-    link: "https://github.com/guy-with-a-cool-terminal/securevault",
+    link: "https://secure-vault-bintech.vercel.app/",
   },
   {
     name: "Portfolio Site",
