@@ -24,15 +24,16 @@ const Header = () => {
       </a>
 
       <header
-        className="fixed top-0 left-0 w-full bg-[#0F172A] backdrop-blur-md border-b border-teal-700 z-40"
+        className="fixed top-0 left-0 w-full glass border-b border-border z-40"
         role="banner"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <h1
-            className="text-2xl font-bold text-teal-400 cursor-default select-none"
+            className="text-2xl font-bold gradient-text cursor-default select-none"
             tabIndex={-1}
           >
-            Brian Njuguna
+            <span className="font-mono">&lt;</span>BN
+            <span className="font-mono">/&gt;</span>
           </h1>
 
           <nav
@@ -47,7 +48,7 @@ const Header = () => {
             aria-expanded={isOpen}
             aria-controls="mobile-menu"
             onClick={toggleMenu}
-            className="md:hidden text-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-[#0F172A] rounded p-1"
+            className="md:hidden text-primary focus:outline-none focus:ring-2 focus:ring-primary rounded p-1 transition-colors hover:bg-primary/10"
           >
             {isOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
@@ -59,7 +60,7 @@ const Header = () => {
 
         <nav
           id="mobile-menu"
-          className={`md:hidden bg-[#0F172A] border-t border-teal-700 overflow-hidden w-full max-w-full transition-all duration-300 ease-in-out ${
+          className={`md:hidden glass border-t border-border overflow-hidden w-full max-w-full transition-all duration-300 ease-in-out ${
             isOpen ? "max-h-48" : "max-h-0"
           }`}
           aria-label="Mobile Primary navigation"
