@@ -14,7 +14,7 @@ const socialLinks: SocialLink[] = [
   },
   {
     platform: "LinkedIn",
-    url: "www.linkedin.com/in/brian-njuguna-80734b242",
+    url: "https://linkedin.com/in/brian-njuguna-80734b242",
     Icon: Linkedin,
   },
   {
