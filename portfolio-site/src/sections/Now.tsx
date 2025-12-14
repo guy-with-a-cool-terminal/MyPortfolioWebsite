@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import {ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 const Now = () => {
   return (
@@ -16,7 +16,7 @@ const Now = () => {
             Current Focus
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-            What I'm <span className="text-secondary">Working On</span>
+            What I'm <span className="text-secondary">Building</span>
           </h2>
         </motion.div>
 
@@ -30,14 +30,16 @@ const Now = () => {
             whileHover={{ y: -4 }}
             style={{ boxShadow: 'var(--shadow-md)' }}
           >
-          <div className="mb-4">
-            <span className="text-2xl font-bold text-foreground/70 group-hover:text-foreground transition-all duration-300" style={{ textShadow: '0 0 15px rgba(var(--secondary-rgb), 0.3)' }}>
-              CnB Code
-            </span>
-          </div>
+            <div className="mb-4">
+              <span className="text-2xl font-bold text-foreground/70 group-hover:text-foreground transition-all duration-300" style={{ textShadow: '0 0 15px rgba(var(--secondary-rgb), 0.3)' }}>
+                CnB Code
+              </span>
+            </div>
+            
             <p className="text-muted-foreground text-base leading-relaxed mb-4">
-              Running a dev shop building websites, online stores,automations and apps for Kenyan businesses..from KES 15K.
+              Running a development agency focused on making business operations run smoother. We integrate AI into business systems, automate workflows that waste time, and build the digital infrastructure that drives real results—whether that's 5 new customers daily or streamlined operations. Leading client projects and managing developer teams to ship solutions that matter.
             </p>
+
             <a
               href="https://cnbcode.com"
               target="_blank"
@@ -49,15 +51,6 @@ const Now = () => {
             </a>
           </motion.div>
         </div>
-
-        <motion.div
-          className="text-center mt-6"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-        </motion.div>
       </div>
     </section>
   );

@@ -30,9 +30,12 @@ const Hero = () => (
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.3 }}
     >
-      Fullstack developer focusing on{" "}
-      <span className="text-primary font-semibold">backend systems, APIs</span> and{" "}
-      <span className="text-primary font-semibold">DevOps</span>. I simplify technical complexity by building tools that make developers' work easier and systems that non-technical users understand.
+      Fullstack developer building production systems with{" "}
+      <span className="text-primary font-semibold">Python, React, and TypeScript</span>. 
+      I build payment infrastructure, automate business workflows, and integrate AI into operations. 
+      Currently running{" "}
+      <span className="text-primary font-semibold">CnB Code</span>, shipping solutions for businesses, 
+      and open to opportunities that push my skills further.
     </motion.p>
 
     <motion.div
@@ -45,12 +48,11 @@ const Hero = () => (
         href="#projects"
         className="group inline-flex items-center justify-center px-8 sm:px-10 py-3 sm:py-4 rounded-full font-semibold text-lg bg-primary text-primary-foreground shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 focus:outline-none focus:ring-2 focus:ring-primary active:scale-95"
       >
-        <span>Explore My Projects</span>
+        <span>View My Work</span>
         <svg className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </a>
-      
       <a
         href="#contact"
         className="inline-flex items-center justify-center px-8 sm:px-10 py-3 sm:py-4 rounded-full font-semibold text-lg border-2 border-primary text-primary hover:bg-primary/10 transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary active:scale-95"

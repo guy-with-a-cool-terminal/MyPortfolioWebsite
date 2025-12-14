@@ -1,27 +1,27 @@
 import { motion } from "framer-motion";
-import { Code2, Shield, Wrench, Target } from "lucide-react";
+import { Code2, Zap, Layers, Server } from "lucide-react";
 
 const aboutData = {
-  intro: "Fullstack developer specializing in backend systems and API development. I've built several applications including payment SDKs, parental control platforms, and voting systems. Great passion in cybersecurity, practicing through hands-on training on platforms like TryHackMe and Hack The Box.",
+  intro: "Fullstack developer building production systems with Python, React, and TypeScript. I've shipped payment infrastructure, automation tools, and SaaS platforms. Currently running CnB Code, integrating AI into business operations and managing development teams.",
   philosophy: [
-  "Write code that's easy to maintain and scale, KISS .",
-  "Security is a mindset.",
-  "Tools change but a good engineer will always be a good engineer regardless"
+    "Write maintainable code. Keep it simple.",
+    "Security isn't optional—it's built in from the start.",
+    "Good fundamentals matter more than framework hype."
   ],
   mission: [
-  "Building applications that handle complexity without showing it.",
-  "Design backend systems the same way I would design my scraper.",
-  "Software should be opensource, its my job to support opensource by building and contributing."
+    "Build systems that handle complexity behind simple interfaces.",
+    "Ship production code that solves real business problems.",
+    "Contribute to open source—software should be accessible."
   ],
   services: [
-    { icon: Shield, label: "Backend systems & REST APIs" },
-    { icon: Target, label: "Payment gateway integrations" },
-    { icon: Shield, label: "Fullstack web applications" },
-    { icon: Wrench, label: "DevOps & CI/CD pipelines" }
+    { icon: Server, label: "Backend systems & REST APIs" },
+    { icon: Zap, label: "Payment gateway integrations" },
+    { icon: Layers, label: "Fullstack web applications" },
+    { icon: Code2, label: "DevOps & CI/CD pipelines" }
   ],
   skills: [
     "Django", "Django REST", "Python", "Node.js", "Express.js",
-    "React", "TypeScript", "PostgreSQL", "Docker", "Kubernetes",
+    "React", "TypeScript", "Tailwind CSS", "PostgreSQL", "Docker", 
     "Redis", "Celery", "AWS", "Git", "Linux"
   ]
 };

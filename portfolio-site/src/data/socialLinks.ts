@@ -1,9 +1,10 @@
 import { Github, Linkedin, LucideIcon } from "lucide-react";
+import whatsappImg from '../assets/whatsapp.svg';
 
 interface SocialLink {
   platform: string;
   url: string;
-  Icon?: LucideIcon | React.ComponentType<{ className?: string }>;
+  Icon: LucideIcon | string; 
 }
 
 const socialLinks: SocialLink[] = [
@@ -20,6 +21,7 @@ const socialLinks: SocialLink[] = [
   {
     platform: "WhatsApp",
     url: "https://wa.me/254114399034?text=Hi%20Brian%2C%20I'd%20like%20to%20discuss%20a%20project%20with%20you.",
+    Icon: whatsappImg,
   },
 ];
 

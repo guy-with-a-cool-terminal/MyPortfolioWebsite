@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Send } from "lucide-react";
 
@@ -10,20 +10,37 @@ interface FormState {
 
 const Contact = () => {
   const [form, setForm] = useState<FormState>({ name: "", email: "", message: "" });
-  const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setStatus("Sending...");
-      setTimeout(() => {
-        setStatus("Message sent successfully!");
-        setForm({ name: "", email: "", message: "" });
-        setTimeout(() => setStatus(null), 5000);
-      }, 1000);
-    },
-    []
-  );
+  const handleSend = () => {
+    // Validate fields
+    if (!form.name || !form.email || !form.message) {
+      setError("Please fill in all fields");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    // Format the WhatsApp message
+    const whatsappMessage = `Hi Brian! 👋
+
+*Name:* ${form.name}
+*Email:* ${form.email}
+
+*Message:*
+${form.message}`;
+
+    // Encode the message for URL
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    
+    // Create WhatsApp URL
+    const whatsappUrl = `https://wa.me/254114399034?text=${encodedMessage}`;
+    
+    // Open WhatsApp in new tab
+    window.open(whatsappUrl, '_blank');
+    
+    // Clear form after sending
+    setForm({ name: "", email: "", message: "" });
+  };
 
   return (
     <motion.section
@@ -47,13 +64,13 @@ const Contact = () => {
             Let's Work Together
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Have a project in mind? Send me a message below.
+            Have a project in mind? Fill the form and I'll reach out on WhatsApp.
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
+        <div
           className="flex flex-col space-y-4 glass p-5 sm:p-6 rounded-xl"
+          role="form"
           aria-label="Contact form"
         >
           <div>
@@ -64,9 +81,9 @@ const Contact = () => {
               id="name"
               type="text"
               placeholder="Your Name"
-              required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               className="w-full p-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-foreground placeholder:text-muted-foreground transition-all duration-300 hover:border-primary/30"
               aria-label="Your Name"
             />
@@ -80,9 +97,9 @@ const Contact = () => {
               id="email"
               type="email"
               placeholder="your.email@example.com"
-              required
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               className="w-full p-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-foreground placeholder:text-muted-foreground transition-all duration-300 hover:border-primary/30"
               aria-label="Your Email"
             />
@@ -95,7 +112,6 @@ const Contact = () => {
             <textarea
               id="message"
               placeholder="Tell me about your project..."
-              required
               rows={5}
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
@@ -105,24 +121,28 @@ const Contact = () => {
           </div>
 
           <button
-            type="submit"
+            onClick={handleSend}
             className="group relative w-full py-3 rounded-lg font-semibold text-base bg-primary text-primary-foreground transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/20 focus:outline-none focus:ring-2 focus:ring-primary overflow-hidden flex items-center justify-center gap-2 active:scale-95"
           >
             <Send className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-            <span className="relative z-10">Send Message</span>
+            <span className="relative z-10">Send via WhatsApp</span>
           </button>
 
-          {status && (
+          {error && (
             <motion.p
               role="alert"
-              className="text-center text-sm text-primary font-semibold p-3 rounded-lg bg-primary/10 border border-primary/20"
+              className="text-center text-sm text-red-500 font-semibold p-3 rounded-lg bg-red-500/10 border border-red-500/20"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              {status}
+              {error}
             </motion.p>
           )}
-        </form>
+
+          <p className="text-center text-xs text-muted-foreground">
+            This will open WhatsApp with your message pre-filled
+          </p>
+        </div>
       </div>
     </motion.section>
   );

@@ -1,3 +1,7 @@
+import safeariImg from '../assets/childontab.webp';
+import paymentImg from '../assets/paymentimage1.webp';
+import gitImg from '../assets/gitautomation.png';
+
 interface Project {
   name: string;
   desc: string;
@@ -13,41 +17,41 @@ interface Project {
 
 const projects: Project[] = [
   {
-    name: "Aegis",
-    desc: "DNS management platform for parental controls with real-time analytics and threat blocking.",
+    name: "Safeari",
+    desc: "A modern web application that makes DNS-based parental controls accessible to everyone. Built with Django, React, TypeScript, and shadcn/ui, it provides families with an intuitive interface to manage content filtering, set time restrictions, and monitor internet usage across all devices - no technical knowledge required",
     link: "https://github.com/guy-with-a-cool-terminal",
-    image: "/src/assets/securevault-project.jpg",
+    image: safeariImg,
     caseStudy: {
       problem: "Parents need technical knowledge to protect children online using DNS filtering, creating barriers to digital safety.",
       solution: "Built a web-based platform that simplifies NextDNS management with automated threat blocking, real-time analytics, device management, and customizable filtering rules for non-technical users.",
       impact: "Production application with active users enabling parents to protect their children online without technical expertise. Features real-time monitoring and automated content blocking.",
-      tech: ["React", "TypeScript", "Tailwind CSS", "Django", "Django REST Framework", "PostgreSQL", "Supabase", "Redis", "Celery"]
+      tech: ["React", "TypeScript", "Tailwind CSS", "Django", "Django REST Framework", "PostgreSQL", "Supabase", "Redis", "Celery","Resend","Paystack"]
     }
   },
   {
-    name: "M-Pesa Payment Wrapper",
-    desc: "Developer-friendly API wrapper for Kenya's Daraja payment system.",
+    name: "Multi-Provider Payment API",
+    desc: "Unified payment infrastructure supporting M-Pesa, Paystack, and card processors with built-in invoicing and subscription management.",
     link: "https://github.com/guy-with-a-cool-terminal",
-    image: "/src/assets/gititdone-project.jpg",
+    image: paymentImg,
     caseStudy: {
-      problem: "Integrating M-Pesa payments requires complex Daraja API knowledge, slowing down payment implementation for developers.",
-      solution: "Created a streamlined API wrapper that simplifies M-Pesa integration through intuitive endpoints, automated registration, and reduced coding complexity.",
-      impact: "Enables faster payment implementation for developers building Kenyan applications, reducing integration time from days to hours.",
-      tech: ["Python", "Django", "REST APIs", "M-Pesa Daraja API", "Payment Processing"]
+      problem: "Clients need flexible payment solutions across different providers (cards, M-Pesa, etc.) without rebuilding infrastructure for each project.",
+      solution: "Built a containerized payment API that supports multiple providers through unified endpoints. Includes automated invoicing, subscription billing for SaaS products, and per-client container deployment with isolated API keys.",
+      impact: "Reduced client payment system deployment from weeks to 3 hours. Serves production traffic with Paystack as primary provider and M-Pesa for local transactions. Clients get full payment infrastructure: processing, invoicing, and subscriptions out of the box.",
+      tech: ["Python", "Django", "Docker", "Paystack API", "M-Pesa Daraja", "REST APIs", "Subscription Billing"]
     }
   },
   {
-    name: "School Voting System",
-    desc: "Comprehensive voting platform serving 500+ students with real-time results.",
-    link: "https://github.com/guy-with-a-cool-terminal",
-    image: "/src/assets/portfolio-project.jpg",
+    name: "GitItDone",
+    desc: "A lightweight Python tool that automates Git commits and pushes. With customizable commit messages and remote support, it simplifies your workflow, saving time and effort. Perfect for developers who want a faster, hassle-free Git experience!",
+    link: "https://github.com/guy-with-a-cool-terminal/GitItDoneAutomationTool",
+    image: gitImg,
     caseStudy: {
-      problem: "Manual voting processes are slow, error-prone, and lack transparency for student elections.",
-      solution: "Led a team of 10 developers to build a secure voting platform with authentication, real-time vote counting, administrative dashboard, and election management.",
-      impact: "Successfully deployed for live school elections serving 500+ students with zero downtime. Delivered transparent, efficient elections with instant results.",
-      tech: ["React", "Node.js", "PostgreSQL", "Authentication", "Real-time Processing"]
+      problem: "Developers waste time on repetitive Git commands, typing the same commit messages and push commands for routine updates, breaking focus from actual coding work.",
+      solution: "Built a Python automation tool that streamlines the Git workflow with one-command commits and pushes, customizable commit message templates, and smart remote repository detection.",
+      impact: "Reduced Git workflow time by 70% for routine commits. Open-sourced on GitHub for the developer community to use and contribute to.",
+      tech: ["Python", "Git", "CLI", "Automation", "Shell Scripting"]
     }
-  },
+  }
 ];
 
 export default projects;

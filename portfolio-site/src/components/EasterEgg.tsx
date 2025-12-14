@@ -18,12 +18,12 @@ const EasterEgg = () => {
       clearTimeout(scrollTimeout);
       
       scrollTimeout = setTimeout(() => {
-        if (currentScrollY > lastScrollY + 50) {
+        if (currentScrollY > lastScrollY + 70) {
           // Scrolled down
           const newPattern = [...scrollPattern, 'down'].slice(-5);
           setScrollPattern(newPattern);
           checkPattern(newPattern);
-        } else if (currentScrollY < lastScrollY - 50) {
+        } else if (currentScrollY < lastScrollY - 70) {
           // Scrolled up
           const newPattern = [...scrollPattern, 'up'].slice(-5);
           setScrollPattern(newPattern);
@@ -38,7 +38,7 @@ const EasterEgg = () => {
       if (JSON.stringify(pattern) === JSON.stringify(targetPattern)) {
         setIsVisible(true);
         setScrollPattern([]);
-        setTimeout(() => setIsVisible(false), 8000);
+        setTimeout(() => setIsVisible(false), 10000);
       }
     };
 
