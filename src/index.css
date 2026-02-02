@@ -4,60 +4,70 @@
 
 @layer base {
   :root {
-    /* Warm Ambient Professional Theme - Harmonious Blend */
-    --background: 220 18% 12%;           /* Deep charcoal with warm undertone */
-    --foreground: 30 8% 88%;             /* Warm off-white */
-    
-    --card: 218 20% 16%;                 /* Elevated charcoal */
-    --card-foreground: 30 8% 88%;
-    
-    --popover: 218 20% 16%;
-    --popover-foreground: 30 8% 88%;
-    
-    --primary: 195 65% 55%;              /* Calm teal - professional & modern */
-    --primary-foreground: 220 18% 12%;   /* Dark text on teal */
-    
-    --secondary: 38 45% 58%;             /* Warm amber - complementary */
-    --secondary-foreground: 220 18% 12%;
-    
-    --muted: 217 18% 22%;                /* Subtle gray-blue */
-    --muted-foreground: 30 6% 62%;       /* Warm muted text */
-    
-    --accent: 195 65% 55%;               /* Teal accent */
-    --accent-foreground: 220 18% 12%;
-    
+    /* "Deep Slate" Theme - Premium, Custom, Easy on eyes */
+    --background: 220 20% 10%;
+    /* Deep Slate - Not generic black/blue */
+    --foreground: 220 10% 96%;
+    /* Crisp white text */
+
+    --card: 220 20% 13%;
+    /* Subtle separation for cards */
+    --card-foreground: 220 10% 96%;
+
+    --popover: 220 20% 13%;
+    --popover-foreground: 220 10% 96%;
+
+    --primary: 190 90% 50%;
+    /* Cyan - electric contrast against slate */
+    --primary-foreground: 220 20% 10%;
+    --primary-dark: 190 90% 40%;
+
+    --secondary: 260 60% 60%;
+    /* Muted Violet for secondary elements */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 20% 16%;
+    /* Lighter slate */
+    --muted-foreground: 220 10% 65%;
+    /* Soft gray for subtext */
+
+    --accent: 330 80% 60%;
+    /* Deep Pink accent */
+    --accent-foreground: 0 0% 100%;
+
     --destructive: 0 72% 58%;
-    --destructive-foreground: 30 8% 98%;
-    
-    --border: 217 18% 24%;               /* Subtle borders */
-    --input: 218 20% 18%;
-    --ring: 195 65% 55%;
-    
-    --sidebar-background: 218 20% 16%;
-    --sidebar-foreground: 30 8% 88%;
-    --sidebar-primary: 195 65% 55%;
-    --sidebar-primary-foreground: 220 18% 12%;
-    --sidebar-accent: 217 18% 22%;
-    --sidebar-accent-foreground: 30 8% 88%;
-    --sidebar-border: 217 18% 24%;
-    --sidebar-ring: 195 65% 55%;
-    
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 20% 18%;
+    /* Subtle slate border */
+    --input: 220 20% 18%;
+    --ring: 190 90% 50%;
+
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 220 10% 96%;
+    --sidebar-primary: 190 90% 50%;
+    --sidebar-primary-foreground: 220 20% 10%;
+    --sidebar-accent: 220 20% 16%;
+    --sidebar-accent-foreground: 220 10% 96%;
+    --sidebar-border: 220 20% 18%;
+    --sidebar-ring: 190 90% 50%;
+
     --radius: 0.75rem;
-    
-    /* Gradient Tokens - Harmonious blend of teal & amber */
-    --gradient-primary: linear-gradient(135deg, hsl(195 65% 55% / 0.08), hsl(195 65% 55% / 0.02));
-    --gradient-secondary: linear-gradient(135deg, hsl(38 45% 58% / 0.08), hsl(38 45% 58% / 0.02));
-    --gradient-subtle: linear-gradient(180deg, hsl(220 18% 12%), hsl(218 20% 16%));
-    --gradient-glow: radial-gradient(circle at 50% 50%, hsl(195 65% 55% / 0.06), transparent 70%);
-    --gradient-card: linear-gradient(135deg, hsl(218 20% 16%), hsl(217 18% 18%));
-    --gradient-warm: linear-gradient(135deg, hsl(195 65% 55% / 0.1), hsl(38 45% 58% / 0.1));
-    
-    /* Shadow Tokens - Harmonious depth */
-    --shadow-sm: 0 1px 3px 0 hsl(220 18% 8% / 0.3);
-    --shadow-md: 0 4px 8px -2px hsl(220 18% 8% / 0.4), 0 2px 4px -2px hsl(220 18% 8% / 0.3);
-    --shadow-lg: 0 10px 20px -5px hsl(220 18% 8% / 0.5), 0 4px 8px -4px hsl(220 18% 8% / 0.4);
-    --shadow-glow: 0 0 24px hsl(195 65% 55% / 0.15), 0 0 36px hsl(195 65% 55% / 0.08);
-    --shadow-warm: 0 0 24px hsl(38 45% 58% / 0.12), 0 0 36px hsl(38 45% 58% / 0.06);
+
+    /* Gradient Tokens - Deep & Rich */
+    --gradient-primary: linear-gradient(135deg, hsl(190 90% 50%), hsl(220 80% 55%));
+    --gradient-secondary: linear-gradient(135deg, hsl(260 60% 60%), hsl(330 80% 60%));
+    --gradient-subtle: linear-gradient(180deg, hsl(220 20% 10%), hsl(220 25% 12%));
+    --gradient-glow: radial-gradient(circle at 50% 50%, hsl(190 90% 50% / 0.1), transparent 70%);
+    --gradient-card: linear-gradient(135deg, hsl(220 20% 13%), hsl(220 20% 15%));
+    --gradient-vibrant: linear-gradient(135deg, hsl(190 90% 50%), hsl(260 60% 60%), hsl(330 80% 60%));
+
+    /* Shadow Tokens - Soft */
+    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 20px 40px -10px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 30px hsl(190 90% 50% / 0.1), 0 0 60px hsl(190 90% 50% / 0.05);
+    --shadow-vibrant: 0 10px 40px hsl(190 90% 50% / 0.15);
   }
 }
 
@@ -65,40 +75,45 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     margin: 0;
   }
-  
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
-  
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
   }
-  
+
   ::-webkit-scrollbar-track {
     @apply bg-background;
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--primary) / 0.3);
     border-radius: 5px;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.5);
   }
-  
+
   /* Typography */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-bold tracking-tight;
   }
-  
+
   /* Focus states */
   *:focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background rounded;
@@ -106,42 +121,46 @@
 }
 
 @layer utilities {
+
   /* Glass morphism effect */
   .glass {
     background: hsl(var(--card) / 0.8);
     backdrop-filter: blur(12px);
     border: 1px solid hsl(var(--border) / 0.5);
   }
-  
+
   /* Glow effects - Very subtle */
   .glow-text {
     text-shadow: 0 0 6px hsl(var(--primary) / 0.06);
   }
-  
+
   .glow-border {
     box-shadow: 0 0 6px hsl(var(--primary) / 0.04);
   }
-  
-  /* Gradient text - Ambient */
+
+  /* Gradient text - Cyan to Violet */
   .gradient-text {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(263 35% 58%));
+    background: linear-gradient(135deg, hsl(190 90% 50%), hsl(260 60% 60%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
+
   /* Card hover effect */
   .card-hover {
     @apply transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1;
     box-shadow: var(--shadow-sm);
   }
-  
+
   .card-hover:hover {
     box-shadow: var(--shadow-lg);
   }
-  
+
   /* Smooth transitions for all interactive elements */
-  button, a, input, textarea {
+  button,
+  a,
+  input,
+  textarea {
     @apply transition-all duration-300;
   }
 }

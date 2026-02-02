@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { X, ArrowUpRight } from "lucide-react";
 import projects from "../data/projects";
 
 const Projects = () => {
@@ -47,87 +47,71 @@ const Projects = () => {
         {projects.map((project, idx) => (
           <motion.article
             key={project.name}
-            className="group relative block rounded-xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
+            className="group relative block rounded-2xl overflow-hidden border border-white/10 shadow-2xl h-[450px]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 * idx, duration: 0.5 }}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ y: -5 }}
             itemScope
             itemType="https://schema.org/CreativeWork"
           >
-            {/* Image - using imported paths from projects data */}
-            <div className="relative h-48 overflow-hidden bg-muted">
-              <img 
+            {/* Background Image & Overlay */}
+            <div className="absolute inset-0 z-0 h-full w-full">
+              <img
                 src={project.image}
-                alt={`${project.name} - ${project.desc.slice(0, 100)}`}
-                className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:rotate-1"
+                alt={`${project.name} preview`}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 loading="lazy"
-                itemProp="image"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent opacity-90" />
             </div>
-            
-            {/* Content */}
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-3">
-                <h3 
-                  className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-300"
-                  itemProp="name"
-                >
-                  {project.name}
-                </h3>
-                <a
-                  href={project.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-all duration-300 transform hover:translate-x-1 hover:-translate-y-1"
-                  aria-label={`View ${project.name} source code on GitHub`}
-                  itemProp="url"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
+
+            {/* Content Overlay */}
+            <div className="relative z-10 p-8 h-full flex flex-col justify-end">
+              <div className="transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
+                <div className="flex items-start justify-between mb-3">
+                  <h3
+                    className="text-2xl font-bold text-white group-hover:text-primary transition-colors duration-300"
+                    itemProp="name"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
-                </a>
-              </div>
-              
-              <p 
-                className="text-muted-foreground text-sm leading-relaxed mb-4"
-                itemProp="description"
-              >
-                {project.desc}
-              </p>
-              
-              {/* Action buttons */}
-              <div className="flex items-center gap-2">
-                <a
-                  href={project.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 transition-all duration-300 hover:bg-primary/20 hover:scale-105"
-                  aria-label={`View ${project.name} project repository`}
-                >
-                  <span className="text-xs font-mono text-primary">View Project</span>
-                </a>
-                {project.caseStudy && (
-                  <button
-                    onClick={() => setSelectedProject(project)}
-                    className="px-3 py-1 rounded-full bg-secondary/10 border border-secondary/20 transition-all duration-300 hover:bg-secondary/20 hover:scale-105"
-                    aria-label={`View ${project.name} case study`}
+                    {project.name}
+                  </h3>
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/70 hover:text-primary transition-colors"
                   >
-                    <span className="text-xs font-mono text-secondary">Case Study</span>
-                  </button>
-                )}
+                    <ArrowUpRight className="w-6 h-6" />
+                  </a>
+                </div>
+
+                <p
+                  className="text-gray-300 text-sm leading-relaxed mb-6 line-clamp-3 group-hover:text-white transition-colors"
+                  itemProp="description"
+                >
+                  {project.desc}
+                </p>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-3 opacity-0 transform translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-sm transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
+                  >
+                    View Project
+                  </a>
+                  {project.caseStudy && (
+                    <button
+                      onClick={() => setSelectedProject(project)}
+                      className="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold text-sm transition-all hover:bg-white/20 hover:scale-105"
+                    >
+                      Case Study
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </motion.article>
@@ -156,8 +140,8 @@ const Projects = () => {
               style={{ boxShadow: 'var(--shadow-lg)' }}
             >
               <div className="flex justify-between items-start mb-6">
-                <h3 
-                  id="case-study-title" 
+                <h3
+                  id="case-study-title"
                   className="text-2xl font-bold text-foreground"
                 >
                   {selectedProject.name}

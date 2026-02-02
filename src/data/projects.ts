@@ -18,19 +18,19 @@ interface Project {
 const projects: Project[] = [
   {
     name: "Safeari",
-    desc: "A modern web application that makes DNS-based parental controls accessible to everyone. Built with Django, React, TypeScript, and shadcn/ui, it provides families with an intuitive interface to manage content filtering, set time restrictions, and monitor internet usage across all devices - no technical knowledge required",
+    desc: "Production parental control platform serving real families. Built the entire stack - Django backend, React frontend, real-time monitoring, automated threat blocking. Not a tutorial project.",
     link: "https://github.com/guy-with-a-cool-terminal",
     image: safeariImg,
     caseStudy: {
       problem: "Parents need technical knowledge to protect children online using DNS filtering, creating barriers to digital safety.",
       solution: "Built a web-based platform that simplifies NextDNS management with automated threat blocking, real-time analytics, device management, and customizable filtering rules for non-technical users.",
       impact: "Production application with active users enabling parents to protect their children online without technical expertise. Features real-time monitoring and automated content blocking.",
-      tech: ["React", "TypeScript", "Tailwind CSS", "Django", "Django REST Framework", "PostgreSQL", "Supabase", "Redis", "Celery","Resend","Paystack"]
+      tech: ["React", "TypeScript", "Tailwind CSS", "Django", "Django REST Framework", "PostgreSQL", "Supabase", "Redis", "Celery", "Resend", "Paystack"]
     }
   },
   {
     name: "Multi-Provider Payment API",
-    desc: "Unified payment infrastructure supporting M-Pesa, Paystack, and card processors with built-in invoicing and subscription management.",
+    desc: "Containerized payment infrastructure handling M-Pesa, Paystack, and cards. Reduced deployment from weeks to 3 hours. Real clients, real transactions, real money.",
     link: "https://github.com/guy-with-a-cool-terminal",
     image: paymentImg,
     caseStudy: {
@@ -42,7 +42,7 @@ const projects: Project[] = [
   },
   {
     name: "GitItDone",
-    desc: "A lightweight Python tool that automates Git commits and pushes. With customizable commit messages and remote support, it simplifies your workflow, saving time and effort. Perfect for developers who want a faster, hassle-free Git experience!",
+    desc: "Python CLI that automates repetitive Git workflows. Open-sourced. 70% faster commits. Where I started - each project since has been more complex.",
     link: "https://github.com/guy-with-a-cool-terminal/GitItDoneAutomationTool",
     image: gitImg,
     caseStudy: {
