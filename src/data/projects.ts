@@ -19,7 +19,7 @@ const projects: Project[] = [
   {
     name: "Safeari",
     desc: "Production parental control platform serving real families. Built the entire stack - Django backend, React frontend, real-time monitoring, automated threat blocking. Not a tutorial project.",
-    link: "https://github.com/guy-with-a-cool-terminal",
+    link: "https://www.safeari.co.ke/",
     image: safeariImg,
     caseStudy: {
       problem: "Parents need technical knowledge to protect children online using DNS filtering, creating barriers to digital safety.",
