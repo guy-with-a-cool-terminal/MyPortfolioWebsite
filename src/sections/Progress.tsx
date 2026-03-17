@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { AlertTriangle, Clock, TrendingDown, Info, AlertCircle, X, Loader2 } from 'lucide-react';
 import { fetchAllTasks, NotionTask } from '../utils/notionClient';
 
 type TimeFilter = 'week' | 'month' | 'all';
@@ -19,6 +20,7 @@ interface Stats {
   averageDelay: number;
   recoveryRate: number;
   avgTasksPerDay: number;
+  pushRate: number;
 }
 
 interface CategoryData {
@@ -38,12 +40,57 @@ interface CapacityData {
   successRate: number;
 }
 
+interface VelocityData {
+  date: string;
+  avg: number;
+  tasks: number;
+}
+
+interface CapacityWarning {
+  date: string;
+  count: number;
+  limit: number;
+}
+
+interface TrendInsight {
+  type: 'velocity' | 'push_rate';
+  title: string;
+  description: string;
+  severity: 'warning' | 'info';
+}
+
 const COLORS = {
-  Work: '#60a5fa',
+  Work: '#38bdf8',
   Learning: '#34d399',
+  Admin: '#f59e0b',
   Programming: '#a78bfa',
-  Personal: '#fbbf24',
-  Admin: '#f87171',
+  Personal: '#fb7185',
+  Neutral: '#94a3b8',
+  Success: '#10b981',
+  Danger: '#ef4444',
+  Background: '#0f172a',
+  Surface: '#1e293b',
+  Border: '#334155',
+  BorderStrong: '#475569',
+  TextPrimary: '#f8fafc',
+  TextSecondary: '#94a3b8',
+  TextMuted: '#64748b',
+};
+
+const hexToRgb = (hex) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '148, 163, 184';
+};
+
+const getLocalDateStr = (d?: Date) => {
+  const date = d || new Date();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
+const TOKENS = {
+  radius: { sm: '8px', md: '12px', lg: '16px', xl: '24px' },
+  spacing: { sm: '12px', md: '16px', lg: '24px', xl: '32px', xxl: '48px' }
 };
 
 const Progress: React.FC = () => {
@@ -65,11 +112,18 @@ const Progress: React.FC = () => {
     averageDelay: 0,
     recoveryRate: 0,
     avgTasksPerDay: 0,
+    pushRate: 0,
   });
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [capacityData, setCapacityData] = useState<CapacityData[]>([]);
   const [heatmapData, setHeatmapData] = useState<Record<string, number>>({});
+  const [velocityData, setVelocityData] = useState<VelocityData[]>([]);
+  const [capacityWarnings, setCapacityWarnings] = useState<CapacityWarning[]>([]);
+  const [trendInsights, setTrendInsights] = useState<TrendInsight[]>([]);
+  const [capacityInsight, setCapacityInsight] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedTasks, setSelectedTasks] = useState<NotionTask[]>([]);
 
   useEffect(() => {
     loadTasks();
@@ -143,6 +197,7 @@ const Progress: React.FC = () => {
 
     const averageDelay = tasksPushed > 0 ? totalDelay / tasksPushed : 0;
     const recoveryRate = completed.length > 0 ? Math.round((tasksOnTime / completed.length) * 100) : 0;
+    const pushRate = completed.length > 0 ? Math.round((tasksPushed / completed.length) * 100) : 0;
 
     // Heatmap data (all-time, shows on-time completions)
     const dailyCounts: Record<string, number> = {};
@@ -163,31 +218,31 @@ const Progress: React.FC = () => {
     let currentStreak = 0;
     let longestStreak = 0;
     let tempStreak = 0;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateStr(new Date());
 
-    for (let i = dates.length - 1; i >= 0; i--) {
-      if (i === dates.length - 1) {
-        const daysDiff = Math.floor((new Date(today).getTime() - new Date(dates[i]).getTime()) / (1000 * 60 * 60 * 24));
-        if (daysDiff === 0) {
-          currentStreak = 1;
-          tempStreak = 1;
-        } else if (daysDiff === 1) {
-          // Yesterday counts as current
-          currentStreak = 1;
-          tempStreak = 1;
-        }
-      } else {
-        const diff = Math.floor((new Date(dates[i + 1]).getTime() - new Date(dates[i]).getTime()) / (1000 * 60 * 60 * 24));
+    if (dates.length > 0) {
+      tempStreak = 1;
+      longestStreak = 1;
+      for (let i = 1; i < dates.length; i++) {
+        const diff = Math.floor((new Date(dates[i]).getTime() - new Date(dates[i - 1]).getTime()) / (1000 * 60 * 60 * 24));
         if (diff === 1) {
           tempStreak++;
-          if (currentStreak > 0) currentStreak = tempStreak;
         } else {
           longestStreak = Math.max(longestStreak, tempStreak);
           tempStreak = 1;
         }
       }
+      longestStreak = Math.max(longestStreak, tempStreak);
+
+      // Current streak: must include today or yesterday
+      const lastDate = dates[dates.length - 1];
+      const daysSinceLast = Math.floor((new Date(today).getTime() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSinceLast <= 1) {
+        currentStreak = tempStreak;
+      } else {
+        currentStreak = 0;
+      }
     }
-    longestStreak = Math.max(longestStreak, tempStreak, currentStreak);
 
     // Total days calculation
     const firstDate = dates[0] ? new Date(dates[0]) : new Date();
@@ -210,6 +265,7 @@ const Progress: React.FC = () => {
       averageDelay: Math.round(averageDelay * 10) / 10,
       recoveryRate,
       avgTasksPerDay: Math.round(avgTasksPerDay * 10) / 10,
+      pushRate,
     });
 
     // Category breakdown (always all-time)
@@ -234,41 +290,180 @@ const Progress: React.FC = () => {
     const monthly = Object.entries(monthCounts).map(([month, tasks]) => ({ month, tasks }));
     setMonthlyData(monthly);
 
-    // Capacity analysis (all-time)
-    const tasksByDay: Record<string, number> = {};
-    allCompleted.forEach(task => {
-      const date = task.dueDate;
-      if (date) {
-        tasksByDay[date] = (tasksByDay[date] || 0) + 1;
+    // Capacity analysis (Scheduled vs Completed)
+    const scheduledByDay: Record<string, number> = {};
+    const actuallyCompletedOnTimeByDay: Record<string, number> = {};
+    
+    // Track all tasks that were due on specific days
+    taskData.forEach(task => {
+      if (task.dueDate) {
+        scheduledByDay[task.dueDate] = (scheduledByDay[task.dueDate] || 0) + 1;
+        if (task.status === 'Completed' && task.completedDate === task.dueDate) {
+          actuallyCompletedOnTimeByDay[task.dueDate] = (actuallyCompletedOnTimeByDay[task.dueDate] || 0) + 1;
+        }
       }
     });
 
-    const capacityBuckets: Record<string, { total: number; completed: number }> = {
-      '1-2': { total: 0, completed: 0 },
-      '3-4': { total: 0, completed: 0 },
-      '5-6': { total: 0, completed: 0 },
-      '7+': { total: 0, completed: 0 },
-    };
-
-    Object.values(tasksByDay).forEach(count => {
-      let bucket = '7+';
-      if (count <= 2) bucket = '1-2';
-      else if (count <= 4) bucket = '3-4';
-      else if (count <= 6) bucket = '5-6';
-
-      capacityBuckets[bucket].total++;
-      capacityBuckets[bucket].completed++;
+    const loadPerformance: Record<number, { days: number; successes: number }> = {};
+    
+    Object.entries(scheduledByDay).forEach(([date, scheduledCount]) => {
+      if (new Date(date) > new Date()) return; // Don't include future days in historical performance
+      
+      if (!loadPerformance[scheduledCount]) {
+        loadPerformance[scheduledCount] = { days: 0, successes: 0 };
+      }
+      
+      loadPerformance[scheduledCount].days++;
+      const completedCount = actuallyCompletedOnTimeByDay[date] || 0;
+      
+      // A success is defined as finishing at least 80% of what you planned for that day
+      if (completedCount >= scheduledCount * 0.8) {
+        loadPerformance[scheduledCount].successes++;
+      }
     });
 
-    const capacity = Object.entries(capacityBuckets)
-      .map(([taskCount, { total, completed }]) => ({
-        taskCount: `${taskCount} tasks/day`,
-        days: total,
-        successRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+    const capacity = Object.entries(loadPerformance)
+      .map(([count, { days, successes }]) => ({
+        taskCount: `${count} tasks/day`,
+        days: days,
+        successRate: Math.round((successes / days) * 100),
+        rawCount: parseInt(count)
       }))
-      .filter(item => item.days > 0);
+      .sort((a, b) => a.rawCount - b.rawCount);
 
     setCapacityData(capacity);
+
+    // Find the "Sweet Spot" - highest success rate with at least 3 days of data
+    const validLoads = capacity.filter(c => c.days >= 3);
+    const bestLoad = validLoads.length > 0 
+      ? validLoads.reduce((prev, curr) => (curr.successRate >= prev.successRate ? curr : prev))
+      : null;
+
+    if (bestLoad) {
+      setCapacityInsight(`Data suggests you are most successful (${bestLoad.successRate}% completion) when scheduling **${bestLoad.rawCount} tasks** per day.`);
+    } else {
+      setCapacityInsight("Keep tracking tasks, Brian, to find your optimal daily capacity.");
+    }
+
+    // Velocity Trend (7-day moving average)
+    const sortedDates = Object.keys(dailyCounts).sort();
+    if (sortedDates.length > 0) {
+      const velocity: VelocityData[] = [];
+      const firstDate = new Date(sortedDates[0]);
+      const lastDate = new Date();
+      
+      for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = getLocalDateStr(d);
+        const tasksOnDay = dailyCounts[dateStr] || 0;
+        
+        // Calculate 7-day moving average
+        let sum = 0;
+        let count = 0;
+        for (let i = 0; i < 7; i++) {
+          const prev = new Date(d);
+          prev.setDate(d.getDate() - i);
+          const prevStr = getLocalDateStr(prev);
+          if (dailyCounts[prevStr]) {
+            sum += dailyCounts[prevStr];
+          }
+        }
+        velocity.push({
+          date: dateStr,
+          tasks: tasksOnDay,
+          avg: Math.round((sum / 7) * 10) / 10
+        });
+      }
+      setVelocityData(velocity);
+    }
+
+    // Capacity Planning (Future Warnings)
+    const upcomingTasks: Record<string, number> = {};
+    const todayStr = getLocalDateStr(new Date());
+    taskData.filter(t => t.status !== 'Completed' && t.dueDate).forEach(task => {
+      if (task.dueDate >= todayStr) {
+        upcomingTasks[task.dueDate] = (upcomingTasks[task.dueDate] || 0) + 1;
+      }
+    });
+
+    const roundedLimit = Math.round(avgTasksPerDay || 2);
+    const warnings: CapacityWarning[] = [];
+    Object.entries(upcomingTasks).forEach(([date, count]) => {
+      if (count > roundedLimit) {
+        warnings.push({ date, count, limit: roundedLimit });
+      }
+    });
+    setCapacityWarnings(warnings.sort((a, b) => a.date.localeCompare(b.date)));
+
+    // Burnout & Trend Insights
+    const insights: TrendInsight[] = [];
+    
+    // Velocity Trend Check
+    if (velocityData.length >= 7) {
+      const currentVelocity = velocityData[velocityData.length - 1].avg;
+      const monthlyData = velocityData.slice(-30);
+      const monthlyAvg = monthlyData.reduce((acc, curr) => acc + curr.avg, 0) / monthlyData.length;
+
+      if (currentVelocity > monthlyAvg * 1.25) {
+        // High Performance
+        insights.push({
+          type: 'velocity',
+          title: 'Unstoppable Momentum! 🔥',
+          description: `You're crushing it, Brian! Your 7-day velocity is well above your monthly average. Keep that energy going!`,
+          severity: 'info'
+        });
+      } else if (currentVelocity < monthlyAvg * 0.75) {
+        // Dip
+        insights.push({
+          type: 'velocity',
+          title: 'Productivity Dip — Is all well? Brian..',
+          description: `Your weekly completion rate is noticeably lower than your usual average. Remember to take a breather if you're feeling burnt out.`,
+          severity: 'warning'
+        });
+      }
+    }
+
+    // Push Rate & Volume Correlation
+    const last7Days = taskData.filter(t => {
+      const taskDate = t.completedDate || t.dueDate;
+      if (!taskDate) return false;
+      const diff = (new Date().getTime() - new Date(taskDate).getTime()) / (1000 * 60 * 60 * 24);
+      return diff <= 7 && t.status === 'Completed';
+    });
+
+    if (last7Days.length >= 3) {
+      const pushedLate = last7Days.filter(t => t.completedDate && t.dueDate && t.completedDate > t.dueDate).length;
+      const pushRate = pushedLate / last7Days.length;
+      const weeklyAvgVolume = last7Days.length / 7;
+
+      if (pushRate > 0.3) {
+        const isVolumeHigh = weeklyAvgVolume >= (roundedLimit * 0.9);
+        insights.push({
+          type: 'push_rate',
+          title: isVolumeHigh ? 'High Workload Pressure ⚠️' : 'Focus & Planning Insight',
+          description: isVolumeHigh 
+            ? `Brian, you're working hard but pushing ${Math.round(pushRate * 100)}% of tasks late. You might be over-committed. Let's scale back tomorrow?`
+            : `You're at a normal workload but still pushing ${Math.round(pushRate * 100)}% of tasks late. Watch out for procrastination creeping in!`,
+          severity: 'warning'
+        });
+      } else if (pushRate === 0 && last7Days.length > 5) {
+        insights.push({
+          type: 'push_rate',
+          title: 'Impeccable Execution 🎯',
+          description: `Flawless execution this week, Brian! You haven't delayed a single task. Absolute machine!`,
+          severity: 'info'
+        });
+      }
+    }
+    setTrendInsights(insights);
+  };
+
+  const handleDateClick = (date: string) => {
+    setSelectedDate(date);
+    const dayTasks = tasks.filter(t => {
+      const taskDate = t.completedDate || t.dueDate;
+      return taskDate === date;
+    });
+    setSelectedTasks(dayTasks);
   };
 
   const renderHeatmap = () => {
@@ -281,7 +476,7 @@ const Progress: React.FC = () => {
     let currentWeek: string[] = [];
 
     for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = getLocalDateStr(d);
       currentWeek.push(dateStr);
       
       if (d.getDay() === 6 || d.getTime() === lastDate.getTime()) {
@@ -291,11 +486,11 @@ const Progress: React.FC = () => {
     }
 
     const getColor = (count: number) => {
-      if (!count) return 'rgba(255, 255, 255, 0.05)';
-      if (count === 1) return 'rgba(96, 165, 250, 0.3)';
-      if (count === 2) return 'rgba(96, 165, 250, 0.5)';
-      if (count === 3) return 'rgba(96, 165, 250, 0.7)';
-      return 'rgba(96, 165, 250, 0.9)';
+      if (!count) return '#1e293b'; // Base card color for empty
+      if (count === 1) return '#083344'; // Level 1 (Dark Cyan)
+      if (count === 2) return '#0891b2'; // Level 2 (Cyan)
+      if (count === 3) return '#0ea5e9'; // Level 3 (Sky)
+      return '#38bdf8'; // Level 4 (Vibrant Sky Blue)
     };
 
     return (
@@ -306,21 +501,26 @@ const Progress: React.FC = () => {
               {week.map((date, j) => (
                 <div
                   key={j}
+                  onClick={() => handleDateClick(date)}
                   title={`${date}: ${heatmapData[date] || 0} on-time tasks`}
                   style={{
                     width: '16px',
                     height: '16px',
                     backgroundColor: getColor(heatmapData[date] || 0),
-                    borderRadius: '2px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '3px',
+                    border: date === selectedDate ? '2px solid #38bdf8' : '0.5px solid #334155',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    transform: date === selectedDate ? 'scale(1.2)' : 'scale(1)',
+                    zIndex: date === selectedDate ? 1 : 0,
                   }}
                 />
               ))}
             </div>
           ))}
         </div>
-        <div style={{ marginTop: '16px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>
-          Only shows days with on-time completions (completed on due date)
+        <div style={{ marginTop: '16px', fontSize: '12px', color: COLORS.TextSecondary, fontWeight: '500' }}>
+          Only shows days with on-time completions (completed on due date). Click a square to explore.
         </div>
       </div>
     );
@@ -330,15 +530,20 @@ const Progress: React.FC = () => {
     return (
       <div style={{
         minHeight: '100vh',
-        background: '#0a0a0f',
+        background: COLORS.Background,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#fff',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1000,
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
-          <div style={{ fontSize: '18px', color: 'rgba(255, 255, 255, 0.6)' }}>Loading your progress...</div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Loader2 className="animate-spin" style={{ width: '48px', height: '48px', marginBottom: '20px', color: '#38bdf8' }} />
+          <div style={{ fontSize: '18px', color: COLORS.TextSecondary, fontWeight: '500' }}>Loading your progress...</div>
         </div>
       </div>
     );
@@ -347,39 +552,41 @@ const Progress: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#0a0a0f',
-      color: '#fff',
+      background: COLORS.Background,
+      color: COLORS.TextPrimary, // Primary Text
       padding: '40px 20px',
+      fontFamily: 'Inter, system-ui, sans-serif',
     }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header with Time Filter */}
         <div style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 style={{
-              fontSize: '48px',
+              fontSize: '32px',
               margin: '0 0 10px 0',
-              background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: '700',
+              color: COLORS.TextPrimary,
+              fontWeight: '800',
+              letterSpacing: '-1px',
             }}>
-              My Progress Dashboard
+              Hey Brian, Here's Your Progress
             </h1>
-            <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '18px', margin: 0 }}>
-              Data-driven insights into my productivity(Connected to Notion Task boards)
+            <p style={{ color: COLORS.TextSecondary, fontSize: '16px', margin: 0 }}>
+              Connected to Notion • Bridging the gap between planning and execution
             </p>
           </div>
           <select
             value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
             style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              color: '#fff',
-              padding: '12px 20px',
-              borderRadius: '8px',
+              background: COLORS.Surface,
+              border: `1px solid ${COLORS.Border}`,
+              color: COLORS.TextPrimary,
+              padding: '10px 16px',
+              borderRadius: '10px',
               fontSize: '14px',
+              fontWeight: '500',
               cursor: 'pointer',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
             }}
           >
             <option value="week">This Week</option>
@@ -396,32 +603,33 @@ const Progress: React.FC = () => {
           marginBottom: '40px',
         }}>
           {[
-            { label: 'Total Tasks', value: stats.total, color: '#60a5fa' },
-            { label: 'Completed', value: stats.completed, color: '#34d399' },
-            { label: 'Completion Rate', value: `${stats.completionRate}%`, color: '#a78bfa' },
-            { label: 'Current Streak', value: `${stats.currentStreak} days`, color: '#fbbf24', subtitle: 'On-time only' },
-            { label: 'Longest Streak', value: `${stats.longestStreak} days`, color: '#f87171', subtitle: 'All-time' },
-            { label: 'Avg Tasks/Day', value: stats.avgTasksPerDay, color: '#60a5fa' },
+            { label: 'Total Tasks', value: stats.total, color: '#38bdf8', subtitle: undefined, themeKey: 'Work' },
+            { label: 'Completed', value: stats.completed, color: '#34d399', subtitle: undefined, themeKey: 'Learning' },
+            { label: 'Completion Rate', value: `${stats.completionRate}%`, color: '#a78bfa', subtitle: undefined, themeKey: 'Programming' },
+            { label: 'Current Streak', value: `${stats.currentStreak} days`, color: '#fb7185', subtitle: undefined, themeKey: 'Personal' },
+            { label: 'Longest Streak', value: `${stats.longestStreak} days`, color: COLORS.TextSecondary, subtitle: undefined, themeKey: 'Neutral' },
+            { label: 'Avg Tasks/Day', value: stats.avgTasksPerDay, color: '#38bdf8', subtitle: undefined, themeKey: 'Work' },
           ].map((stat, i) => (
             <div key={i} style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              padding: '24px',
-              borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: `rgba(${hexToRgb(COLORS[stat.themeKey as keyof typeof COLORS] || COLORS.Neutral)}, 0.08)`,
+              padding: TOKENS.spacing.lg,
+              borderRadius: TOKENS.radius.lg,
+              border: `1px solid rgba(${hexToRgb(COLORS[stat.themeKey as keyof typeof COLORS] || COLORS.Neutral)}, 0.25)`,
             }}>
-              <div style={{ fontSize: '32px', fontWeight: '700', color: stat.color, marginBottom: '8px' }}>
+              <div style={{ fontSize: '32px', fontWeight: '800', color: stat.color, marginBottom: '8px' }}>
                 {stat.value}
               </div>
               <div style={{
                 fontSize: '13px',
-                color: 'rgba(255, 255, 255, 0.6)',
+                color: COLORS.TextMuted,
+                fontWeight: '600',
                 textTransform: 'uppercase',
-                letterSpacing: '1px',
+                letterSpacing: '0.5px',
               }}>
                 {stat.label}
               </div>
               {stat.subtitle && (
-                <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.4)', marginTop: '4px' }}>
+                <div style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: COLORS.TextSecondary, marginTop: '4px' }}>
                   {stat.subtitle}
                 </div>
               )}
@@ -429,47 +637,202 @@ const Progress: React.FC = () => {
           ))}
         </div>
 
+        {/* Capacity Warnings */}
+        {capacityWarnings.length > 0 && (
+          <div style={{ marginBottom: '30px' }}>
+            {capacityWarnings.slice(0, 3).map((warning, i) => (
+              <div key={i} style={{
+                background: COLORS.Surface,
+                border: `1px solid ${COLORS.Border}`,
+                padding: '16px 20px',
+                borderRadius: TOKENS.radius.md,
+                marginBottom: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                color: '#fcd34d',
+                fontSize: '14px',
+              }}>
+                <AlertTriangle size={20} color="#f59e0b" />
+                <span>
+                  <strong style={{ color: '#f59e0b' }}>Careful Brian, Capacity Overload:</strong> You have {warning.count} tasks due on {warning.date}. 
+                  Your historical sweet spot is {warning.limit} tasks/day. 
+                  <strong style={{ color: '#f59e0b' }}> Suggestion:</strong> Move {warning.count - warning.limit} task{warning.count - warning.limit > 1 ? 's' : ''} to another day to protect your success rate.
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Trend Insights (Burnout/Downhill detection) */}
+        {trendInsights.length > 0 && (
+          <div style={{ marginBottom: '30px' }}>
+            <h3 style={{ fontSize: '14px', color: COLORS.TextSecondary, marginBottom: '15px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Trend Insights
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '15px' }}>
+              {trendInsights.map((insight, i) => (
+                <div key={i} style={{
+                  background: insight.severity === 'warning' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(167, 139, 250, 0.08)',
+                  border: `1px solid ${insight.severity === 'warning' ? 'rgba(245, 158, 11, 0.25)' : 'rgba(167, 139, 250, 0.25)'}`,
+                  padding: '20px',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  gap: '15px',
+                  alignItems: 'flex-start',
+                }}>
+                  <div style={{
+                    padding: '10px',
+                    background: insight.severity === 'warning' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(167, 139, 250, 0.12)',
+                    borderRadius: '10px',
+                    color: insight.severity === 'warning' ? '#f59e0b' : '#a78bfa',
+                  }}>
+                    {insight.type === 'velocity' ? <TrendingDown size={24} /> : <Clock size={24} />}
+                  </div>
+                  <div>
+                    <div style={{ 
+                      fontSize: '18px', 
+                      fontWeight: '700', 
+                      color: insight.severity === 'warning' ? '#f59e0b' : '#a78bfa', 
+                      marginBottom: '4px' 
+                    }}>
+                      {insight.title}
+                    </div>
+                    <div style={{ fontSize: '14px', color: COLORS.TextSecondary, lineHeight: '1.5' }}>
+                      {insight.description}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {selectedDate && (
+          <div style={{
+            background: COLORS.Surface,
+            padding: TOKENS.spacing.xl,
+            borderRadius: TOKENS.radius.xl,
+            border: `1px solid ${COLORS.BorderStrong}`,
+            marginBottom: '30px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
+            transition: 'all 0.3s ease-in-out',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: COLORS.TextPrimary }}>
+                Tasks for {selectedDate}
+              </h2>
+              <button 
+                onClick={() => setSelectedDate(null)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: `1px solid ${COLORS.Border}`,
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  color: COLORS.TextSecondary,
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            {selectedTasks.length > 0 ? (
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {selectedTasks.map((task, i) => (
+                  <div key={i} style={{
+                  padding: '16px',
+                  background: COLORS.Surface,
+                  borderRadius: TOKENS.radius.md,
+                  border: `1px solid ${COLORS.Border}`,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                  <div>
+                    <div style={{ fontWeight: '700', color: COLORS.TextPrimary, marginBottom: '4px' }}>{task.task}</div>
+                    <div style={{ fontSize: '12px', color: COLORS.TextSecondary, display: 'flex', gap: '10px' }}>
+                      <span style={{ color: COLORS[task.category as keyof typeof COLORS] || COLORS.TextSecondary, fontWeight: 'bold' }}>{task.category}</span>
+                      <span>•</span>
+                      <span>{task.status}</span>
+                    </div>
+                  </div>
+                  {task.status === 'Completed' && (
+                    <div style={{
+                      fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em',
+                      background: 'rgba(16, 185, 129, 0.08)',
+                      color: task.completedDate === task.dueDate ? '#34d399' : '#fb7185',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      fontWeight: '700',
+                      border: `1px solid ${task.completedDate === task.dueDate ? 'rgba(52, 211, 153, 0.1)' : 'rgba(251, 113, 133, 0.1)'}`
+                    }}>
+                      {task.completedDate === task.dueDate ? 'ON TIME' : 'PUSHED'}
+                    </div>
+                  )}
+                </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ color: COLORS.TextSecondary, textAlign: 'center', padding: '20px', fontWeight: '500' }}>
+                No tasks recorded for this day.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Task Health Section */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          padding: '30px',
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: COLORS.Surface,
+            padding: TOKENS.spacing.xl,
+            borderRadius: TOKENS.radius.xl,
+            border: `1px solid ${COLORS.BorderStrong}`,
           marginBottom: '30px',
         }}>
-          <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '600' }}>
+          <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '700', color: COLORS.TextPrimary }}>
             Task Health
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
-            <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '8px' }}>
-              <div style={{ fontSize: '36px', fontWeight: '700', color: '#34d399' }}>{stats.tasksOnTime}</div>
-              <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>On Time</div>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: '20px' 
+          }}>
+            <div style={{ textAlign: 'center', padding: '20px', background: `rgba(${hexToRgb('#34d399')}, 0.08)`, borderRadius: TOKENS.radius.lg, border: `1px solid rgba(${hexToRgb('#34d399')}, 0.25)` }}>
+              <div style={{ fontSize: '36px', fontWeight: '800', color: '#34d399' }}>{stats.tasksOnTime}</div>
+              <div style={{ fontSize: '14px', color: COLORS.TextSecondary, fontWeight: '600' }}>On Time</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: '8px' }}>
-              <div style={{ fontSize: '36px', fontWeight: '700', color: '#fbbf24' }}>{stats.tasksPushed}</div>
-              <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>Pushed Late</div>
+            <div style={{ textAlign: 'center', padding: '20px', background: `rgba(${hexToRgb('#f59e0b')}, 0.08)`, borderRadius: TOKENS.radius.lg, border: `1px solid rgba(${hexToRgb('#f59e0b')}, 0.25)` }}>
+              <div style={{ fontSize: '36px', fontWeight: '800', color: '#f59e0b' }}>{stats.tasksPushed}</div>
+              <div style={{ fontSize: '14px', color: COLORS.TextSecondary, fontWeight: '600' }}>Pushed Late</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(167, 139, 250, 0.1)', borderRadius: '8px' }}>
-              <div style={{ fontSize: '36px', fontWeight: '700', color: '#a78bfa' }}>{stats.averageDelay}</div>
-              <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>Avg Delay (days)</div>
+            <div style={{ textAlign: 'center', padding: '20px', background: `rgba(${hexToRgb('#a78bfa')}, 0.08)`, borderRadius: TOKENS.radius.lg, border: `1px solid rgba(${hexToRgb('#a78bfa')}, 0.25)` }}>
+              <div style={{ fontSize: '36px', fontWeight: '800', color: '#a78bfa' }}>{stats.pushRate}%</div>
+              <div style={{ fontSize: '14px', color: COLORS.TextSecondary, fontWeight: '600' }}>Push Rate</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(96, 165, 250, 0.1)', borderRadius: '8px' }}>
-              <div style={{ fontSize: '36px', fontWeight: '700', color: '#60a5fa' }}>{stats.recoveryRate}%</div>
-              <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>On-Time Rate</div>
+            <div style={{ textAlign: 'center', padding: '20px', background: `rgba(${hexToRgb('#a78bfa')}, 0.08)`, borderRadius: TOKENS.radius.lg, border: `1px solid rgba(${hexToRgb('#a78bfa')}, 0.25)` }}>
+              <div style={{ fontSize: '36px', fontWeight: '800', color: '#a78bfa' }}>{stats.averageDelay}</div>
+              <div style={{ fontSize: '14px', color: COLORS.TextSecondary, fontWeight: '600' }}>Avg Delay (days)</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '20px', background: `rgba(${hexToRgb('#38bdf8')}, 0.08)`, borderRadius: TOKENS.radius.lg, border: `1px solid rgba(${hexToRgb('#38bdf8')}, 0.25)` }}>
+              <div style={{ fontSize: '36px', fontWeight: '800', color: '#38bdf8' }}>{stats.recoveryRate}%</div>
+              <div style={{ fontSize: '14px', color: COLORS.TextSecondary, fontWeight: '600' }}>On-Time Rate</div>
             </div>
           </div>
         </div>
 
-        {/* Heatmap */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          padding: '30px',
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: COLORS.Surface,
+            padding: TOKENS.spacing.xl,
+            borderRadius: TOKENS.radius.xl,
+            border: `1px solid ${COLORS.BorderStrong}`,
           marginBottom: '30px',
         }}>
-          <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '600' }}>
-            Activity Heatmap (All-Time)
+          <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '700', color: COLORS.TextPrimary }}>
+            Activity Heatmap
           </h2>
           {renderHeatmap()}
         </div>
@@ -477,93 +840,208 @@ const Progress: React.FC = () => {
         {/* Charts Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
           gap: '30px',
           marginBottom: '30px',
         }}>
-          {/* Monthly Tasks */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            padding: '30px',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: COLORS.Surface,
+            padding: TOKENS.spacing.xl,
+            borderRadius: TOKENS.radius.xl,
+            border: `1px solid ${COLORS.BorderStrong}`,
+            gridColumn: '1 / -1', // Always spans full width on desktop if space allows
           }}>
-            <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '600' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '600' }}>
+                Completion Velocity (7-Day Moving Avg)
+              </h2>
+              <div style={{
+                fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em',
+                background: 'rgba(167, 139, 250, 0.1)',
+                color: '#a78bfa',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: '1px solid rgba(167, 139, 250, 0.25)',
+                fontWeight: '600',
+              }}>
+                <Info size={14} />
+                Speed of Consistency
+              </div>
+            </div>
+            
+            <div style={{ 
+              background: 'rgba(167, 139, 250, 0.08)', 
+              padding: '12px 16px', 
+              borderRadius: TOKENS.radius.md, 
+              marginBottom: '20px',
+              fontSize: '13px',
+              lineHeight: '1.5',
+              color: COLORS.TextSecondary,
+              borderLeft: '4px solid #a78bfa',
+              border: '1px solid rgba(167, 139, 250, 0.25)'
+            }}>
+              <strong>How to read this:</strong> A steady line shows consistent discipline. A downward trend (Velocity Dip) warns of burnout before you feel it.
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={velocityData}>
+                <XAxis dataKey="date" stroke="#94a3b8" tick={{ fill: COLORS.TextMuted, fontSize: 12 }} />
+                <YAxis stroke="#94a3b8" tick={{ fill: COLORS.TextMuted, fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{
+                    background: COLORS.Background,
+                    border: `1px solid ${COLORS.Border}`,
+                    borderRadius: TOKENS.radius.md,
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                  }}
+                  itemStyle={{ color: COLORS.TextPrimary }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="avg" 
+                  stroke="#a78bfa" 
+                  strokeWidth={3} 
+                  dot={false}
+                  name="7-day Avg"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="tasks" 
+                  stroke="#334155" 
+                  strokeWidth={2} 
+                  dot={true}
+                  name="Daily Tasks"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+            <div style={{ marginTop: '16px', fontSize: '12px', color: COLORS.TextSecondary, fontWeight: '500' }}>
+              Completion velocity tracks your output trend to catch early signs of fatigue.
+            </div>
+          </div>
+          <div style={{
+            background: COLORS.Surface,
+            padding: TOKENS.spacing.xl,
+            borderRadius: TOKENS.radius.xl,
+            border: `1px solid ${COLORS.BorderStrong}`,
+          }}>
+            <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '700', color: COLORS.TextPrimary }}>
               Tasks by Month
             </h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData}>
-                <XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.3)" tick={{ fill: 'rgba(255, 255, 255, 0.6)' }} />
-                <YAxis stroke="rgba(255, 255, 255, 0.3)" tick={{ fill: 'rgba(255, 255, 255, 0.6)' }} />
+                <XAxis dataKey="month" stroke="#94a3b8" tick={{ fill: COLORS.TextMuted }} />
+                <YAxis stroke="#94a3b8" tick={{ fill: COLORS.TextMuted }} />
                 <Tooltip
                   contentStyle={{
-                    background: 'rgba(26, 26, 31, 0.95)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
+                    background: COLORS.Background,
+                    border: `1px solid ${COLORS.Border}`,
+                    borderRadius: TOKENS.radius.md,
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
                   }}
+                  itemStyle={{ color: COLORS.TextPrimary }}
                 />
-                <Bar dataKey="tasks" fill="#60a5fa" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="tasks" fill="#38bdf8" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Capacity Analysis */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            padding: '30px',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: COLORS.Surface,
+            padding: TOKENS.spacing.xl,
+            borderRadius: TOKENS.radius.xl,
+            border: `1px solid ${COLORS.BorderStrong}`,
           }}>
-            <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '600' }}>
-              Daily Capacity Analysis
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: COLORS.TextPrimary }}>
+                Capacity Analysis
+              </h2>
+              <div style={{
+                fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em',
+                background: 'rgba(56, 189, 248, 0.1)',
+                color: '#38bdf8',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                fontWeight: '600'
+              }}>
+                <Info size={14} />
+                Focus Guide
+              </div>
+            </div>
+
+            <div style={{ 
+              background: COLORS.Surface, 
+              padding: '12px 16px', 
+              borderRadius: TOKENS.radius.md, 
+              marginBottom: '20px',
+              fontSize: '13px',
+              lineHeight: '1.5',
+              color: COLORS.TextSecondary,
+              borderLeft: '4px solid #34d399',
+              border: `1px solid ${COLORS.Border}`
+            }}>
+              <strong>Capacity Insight:</strong> {capacityInsight ? (
+                <span dangerouslySetInnerHTML={{ __html: capacityInsight.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #34d399">$1</strong>') }} />
+              ) : (
+                "Loading insights..."
+              )}
+            </div>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={capacityData}>
-                <XAxis dataKey="taskCount" stroke="rgba(255, 255, 255, 0.3)" tick={{ fill: 'rgba(255, 255, 255, 0.6)' }} />
-                <YAxis stroke="rgba(255, 255, 255, 0.3)" tick={{ fill: 'rgba(255, 255, 255, 0.6)' }} />
+                <XAxis dataKey="taskCount" stroke="#94a3b8" tick={{ fill: COLORS.TextMuted }} />
+                <YAxis stroke="#94a3b8" tick={{ fill: COLORS.TextMuted }} />
                 <Tooltip
                   contentStyle={{
-                    background: 'rgba(26, 26, 31, 0.95)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
+                    background: COLORS.Background,
+                    border: `1px solid ${COLORS.Border}`,
+                    borderRadius: TOKENS.radius.md,
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
                   }}
+                  itemStyle={{ color: COLORS.TextPrimary }}
                 />
                 <Bar dataKey="days" fill="#34d399" radius={[8, 8, 0, 0]} name="Days at this load" />
               </BarChart>
             </ResponsiveContainer>
-            <div style={{ marginTop: '16px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>
-              Shows how many days you worked at each task volume
-            </div>
           </div>
         </div>
 
         {/* Category & Status Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
           gap: '30px',
           marginBottom: '30px',
         }}>
           {/* Category Breakdown */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            padding: '30px',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: COLORS.Surface,
+            padding: TOKENS.spacing.xl,
+            borderRadius: TOKENS.radius.xl,
+            border: `1px solid ${COLORS.BorderStrong}`,
           }}>
-            <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '600' }}>
-              Category Distribution (All-Time)
+            <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '700', color: COLORS.TextPrimary }}>
+              Categories
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px' }}>
               {categoryData.map((cat, i) => (
-                <div key={i} style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '8px' }}>
+                  <div key={i} style={{ 
+                    padding: '16px', 
+                    background: `rgba(${hexToRgb(COLORS[cat.name as keyof typeof COLORS] || COLORS.Neutral)}, 0.08)`, 
+                    borderRadius: TOKENS.radius.md,
+                    border: `1px solid rgba(${hexToRgb(COLORS[cat.name as keyof typeof COLORS] || COLORS.Neutral)}, 0.25)`,
+                  }}>
+                  <div style={{ fontSize: '13px', color: COLORS.TextSecondary, marginBottom: '8px', fontWeight: '600', textTransform: 'uppercase' }}>
                     {cat.name}
                   </div>
-                  <div style={{ fontSize: '24px', fontWeight: '700', color: COLORS[cat.name as keyof typeof COLORS] }}>
+                  <div style={{ fontSize: '28px', fontWeight: '800', color: COLORS[cat.name as keyof typeof COLORS] || '#f1f5f9' }}>
                     {cat.completed}
                   </div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                  <div style={{ fontSize: '12px', color: COLORS.TextSecondary, fontWeight: '500' }}>
                     {cat.incomplete} incomplete
                   </div>
                 </div>
@@ -573,26 +1051,26 @@ const Progress: React.FC = () => {
 
           {/* Status Overview */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            padding: '30px',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: COLORS.Surface,
+            padding: TOKENS.spacing.xl,
+            borderRadius: TOKENS.radius.xl,
+            border: `1px solid ${COLORS.BorderStrong}`,
           }}>
-            <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '600' }}>
-              Task Status
+            <h2 style={{ margin: '0 0 20px 0', fontSize: '24px', fontWeight: '700', color: COLORS.TextPrimary }}>
+              Current Status
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-              <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '36px', fontWeight: '700', color: '#34d399' }}>{stats.completed}</div>
-                <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>Completed</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '20px' }}>
+              <div style={{ textAlign: 'center', padding: '20px', background: `rgba(${hexToRgb('#34d399')}, 0.08)`, borderRadius: TOKENS.radius.lg, border: `1px solid rgba(${hexToRgb('#34d399')}, 0.25)` }}>
+                <div style={{ fontSize: '32px', fontWeight: '800', color: '#34d399' }}>{stats.completed}</div>
+                <div style={{ fontSize: '13px', color: '#34d399', fontWeight: '600' }}>Done</div>
               </div>
-              <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '36px', fontWeight: '700', color: '#fbbf24' }}>{stats.inProgress}</div>
-                <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>In Progress</div>
+              <div style={{ textAlign: 'center', padding: '20px', background: `rgba(${hexToRgb('#38bdf8')}, 0.08)`, borderRadius: TOKENS.radius.lg, border: `1px solid rgba(${hexToRgb('#38bdf8')}, 0.25)` }}>
+                <div style={{ fontSize: '32px', fontWeight: '800', color: '#38bdf8' }}>{stats.inProgress}</div>
+                <div style={{ fontSize: '13px', color: '#38bdf8', fontWeight: '600' }}>In Progress</div>
               </div>
-              <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(248, 113, 113, 0.1)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '36px', fontWeight: '700', color: '#f87171' }}>{stats.notStarted}</div>
-                <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>Not Started</div>
+              <div style={{ textAlign: 'center', padding: '20px', background: `rgba(${hexToRgb('#fb7185')}, 0.08)`, borderRadius: TOKENS.radius.lg, border: `1px solid rgba(${hexToRgb('#fb7185')}, 0.25)` }}>
+                <div style={{ fontSize: '32px', fontWeight: '800', color: '#fb7185' }}>{stats.notStarted}</div>
+                <div style={{ fontSize: '13px', color: '#fb7185', fontWeight: '600' }}>To Do</div>
               </div>
             </div>
           </div>
