@@ -26,10 +26,12 @@ Single-page React + TypeScript app built with Vite. Three routes:
 
 - [src/sections/](src/sections/) — Full-page sections (`Hero`, `About`, `Projects`, `Skills`, `Contact`, `Progress`, `Chat`)
 - [src/components/](src/components/) — Shared UI (`Header`, `Footer`, `NavLinks`, `SocialSidebar`, `ScrollProgress`, `CVModal`, `EasterEgg`, `GitHubActivity`)
-- [src/components/ui/](src/components/ui/) — shadcn primitives, used by `Chat.tsx` (`Progress.tsx` deliberately doesn't use these — see below)
+- [src/components/ui/](src/components/ui/) — shadcn primitives, used by both `Chat.tsx` and `Progress.tsx`
 - [src/data/](src/data/) — Static data (`projects.ts` defines the `Project` interface and the three featured projects; `socialLinks.ts` for sidebar links)
-- [src/utils/notionClient.ts](src/utils/notionClient.ts) — Fetches the raw task list from a Cloudflare Worker proxy (`notion-proxy.njugunabriian-dev.workers.dev`) that wraps the Notion API. `Progress.tsx` uses this only for its click-a-heatmap-day detail view; `notion-proxy` does not paginate past 100 rows, so don't reuse it as a source of truth for anything computed
-- [src/utils/chatClient.ts](src/utils/chatClient.ts) — Talks to the `notion-chat` Cloudflare Worker (sibling project at `/home/Bri/Desktop/work/notion-chat-worker/notion-chat`, deployed as `notion-chat.njugunabriian-dev.workers.dev`): the PIN-gated chat/logging endpoints used by `Chat.tsx`, and `fetchProgressStats()` — the **canonical, paginated** stats calculation used by both `Chat.tsx`'s planning tool and `Progress.tsx`'s dashboard. See that worker's `DECISIONS.md` before adding a second implementation of any of this logic
+- [src/utils/notionClient.ts](src/utils/notionClient.ts) — Fetches the raw task list from a Cloudflare Worker proxy (`notion-proxy.njugunabriian-dev.workers.dev`). It has no pagination handling, so if Notion's response ever spans more than one page this worker can't fetch the rest (`fetchAllTasks()` returns `{ tasks, truncated }` so callers can tell if that ever happens) — don't reuse it as a source of truth for anything computed without checking `truncated`
+- [src/utils/chatClient.ts](src/utils/chatClient.ts) — Talks to the `notion-chat` Cloudflare Worker (sibling project at `/home/Bri/Desktop/work/notion-chat-worker/notion-chat`): the PIN-gated chat/logging endpoints used by `Chat.tsx`, and `fetchProgressStats()`, the **canonical, paginated** stats calculation. **`notion-chat` is not currently deployed** — see [src/lib/progressDataSource.ts](src/lib/progressDataSource.ts)
+- [src/lib/progressDataSource.ts](src/lib/progressDataSource.ts) — The single switch (`VITE_STATS_SOURCE` env var, see `.env.example`) deciding whether `Progress.tsx` gets its stats from the `notion-chat` worker (`'worker'`, canonical) or computes them client-side (`'local'`, current default — the fallback used while `notion-chat` isn't deployed). Flip the env var once it's deployed; don't hardcode a branch anywhere else
+- [src/lib/computeProgressStats.ts](src/lib/computeProgressStats.ts) — The `'local'` fallback: a deliberate second copy of `notion-chat/worker/stats.ts`'s calculation, kept in sync manually (see that file's header comment and `notion-chat/DECISIONS.md` #2)
 
 ### Theming
 
@@ -43,7 +45,7 @@ Component library configured in [components.json](components.json). Import path 
 
 ### Progress dashboard
 
-[src/sections/Progress.tsx](src/sections/Progress.tsx) is a self-contained analytics dashboard using inline styles (not Tailwind) and its own color tokens (`COLORS` object). It's intentionally separate from the main portfolio theme. It renders streaks, velocity trends, capacity analysis, and burnout detection — but does not compute any of it; those numbers come from `chatClient.ts`'s `fetchProgressStats()` (the `notion-chat` worker). Raw per-task data (via `notionClient.ts`) is only used for the day-detail view under the heatmap.
+[src/sections/Progress.tsx](src/sections/Progress.tsx) is a Tailwind/shadcn analytics dashboard: a fixed-width left rail of bare numbers (Overview, Task health, Current status) next to a wide right column of everything spatial (the activity heatmap, velocity/monthly/capacity charts, a horizontal bar chart of category completions). Colors are drawn from [src/lib/progress-palette.ts](src/lib/progress-palette.ts) (validated against the dataviz skill's CVD/contrast checks — re-validate if you change it). It renders streaks, velocity trends, capacity analysis, and burnout detection but does not compute any of it itself; see `progressDataSource.ts` above for where the numbers actually come from.
 
 ### Chat (logging + planning assistant)
 

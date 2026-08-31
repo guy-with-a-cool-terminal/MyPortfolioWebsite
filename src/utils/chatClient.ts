@@ -4,7 +4,9 @@
 // The PIN is checked server-side on every request (see notion-chat/DECISIONS.md #5).
 // This client just carries whatever PIN the user entered; it enforces nothing itself.
 
-const WORKER_URL = 'https://notion-chat.njugunabriian-dev.workers.dev';
+import type { TimeFilter, ProgressData } from '../lib/computeProgressStats';
+
+const WORKER_URL = import.meta.env.VITE_NOTION_CHAT_URL || 'https://notion-chat.njugunabriian-dev.workers.dev';
 
 export type ChatRole = 'user' | 'assistant';
 
@@ -63,39 +65,12 @@ export async function confirmLog(pin: string, entry: DraftEntry): Promise<{ ok: 
   return res.json();
 }
 
-// Progress stats. The canonical calculation lives entirely in the notion-chat worker
-// (worker/stats.ts). Progress.tsx fetches this instead of recomputing it itself, so
-// there is exactly one implementation of streak/velocity/capacity logic. See
-// notion-chat/DECISIONS.md #2 before adding a second one anywhere.
-export type TimeFilter = 'week' | 'month' | 'all';
-
-export interface ProgressData {
-  stats: {
-    total: number;
-    completed: number;
-    inProgress: number;
-    notStarted: number;
-    completionRate: number;
-    currentStreak: number;
-    longestStreak: number;
-    daysActive: number;
-    totalDays: number;
-    tasksOnTime: number;
-    tasksPushed: number;
-    averageDelay: number;
-    recoveryRate: number;
-    avgTasksPerDay: number;
-    pushRate: number;
-  };
-  categoryData: { name: string; completed: number; incomplete: number }[];
-  monthlyData: { month: string; tasks: number }[];
-  capacityData: { taskCount: string; days: number; successRate: number; rawCount: number }[];
-  heatmapData: Record<string, number>;
-  velocityData: { date: string; avg: number; tasks: number }[];
-  capacityWarnings: { date: string; count: number; limit: number }[];
-  trendInsights: { type: 'velocity' | 'push_rate'; title: string; description: string; severity: 'warning' | 'info' }[];
-  capacityInsight: string;
-}
+// Progress stats. The canonical CALCULATION lives entirely in the notion-chat worker
+// (worker/stats.ts) — this just fetches its result; the TYPES for that result are
+// shared with src/lib/computeProgressStats.ts (the local fallback used until
+// notion-chat is deployed, see src/lib/progressDataSource.ts) so both branches of
+// that switch return exactly the same shape to Progress.tsx.
+export type { TimeFilter, ProgressData };
 
 export async function fetchProgressStats(filter: TimeFilter): Promise<ProgressData> {
   const res = await fetch(`${WORKER_URL}/stats?filter=${filter}`);

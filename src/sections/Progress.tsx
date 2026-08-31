@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, Cell, LabelList, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Loader2 } from 'lucide-react';
 import { fetchAllTasks, NotionTask } from '../utils/notionClient';
-import { fetchProgressStats, TimeFilter, ProgressData } from '../utils/chatClient';
+import { fetchProgressStats } from '../utils/chatClient';
+import { computeProgressData, TimeFilter, ProgressData } from '../lib/computeProgressStats';
+import { STATS_SOURCE } from '../lib/progressDataSource';
 import { CATEGORY_COLORS, STATUS_COLORS, HEATMAP_RAMP, CHART_CHROME } from '../lib/progress-palette';
 import { cn } from '../lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -126,6 +128,10 @@ const Progress: React.FC = () => {
   const [loading, setLoading] = useState(true); // true only until the first successful load
   const [refreshing, setRefreshing] = useState(false); // true on subsequent filter changes
   const [error, setError] = useState<string | null>(null);
+  // Set only in 'local' mode (see progressDataSource.ts) — notion-proxy has no
+  // pagination handling, so if Notion's response ever spans more than one page
+  // this surfaces that instead of just showing wrong numbers silently.
+  const [truncated, setTruncated] = useState(false);
   // A ref, not state: reading it doesn't need to re-trigger the effect below (state
   // would, since flipping it there would refire the effect right after every load and
   // double-fetch on every mount/filter change).
@@ -134,22 +140,38 @@ const Progress: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTasks, setSelectedTasks] = useState<NotionTask[]>([]);
 
-  // Raw tasks are only needed for the click-a-heatmap-day detail view.
+  // 'worker' mode still needs the raw per-task list for the click-a-heatmap-day
+  // detail view even though it doesn't need it for stats. 'local' mode already
+  // fetches the same list below (to compute stats from), so fetching it again
+  // here would just be a second redundant call to notion-proxy.
   useEffect(() => {
-    fetchAllTasks().then(setTasks);
+    if (STATS_SOURCE === 'worker') {
+      fetchAllTasks().then(({ tasks }) => setTasks(tasks));
+    }
   }, []);
 
-  // All computed stats come from the notion-chat worker's /stats endpoint, the single
-  // implementation of this logic (see notion-chat/DECISIONS.md #2). Refetching on a
-  // filter change never blanks the page: the previous render holds at reduced opacity
-  // until the new data arrives, rather than flashing skeletons on every click.
+  // Stats come from whichever source progressDataSource.ts picks — see that file
+  // to switch. Refetching on a filter change never blanks the page: the previous
+  // render holds at reduced opacity until the new data arrives, rather than
+  // flashing skeletons on every click.
   useEffect(() => {
     let cancelled = false;
     if (hasLoadedRef.current) setRefreshing(true);
     else setLoading(true);
     setError(null);
 
-    fetchProgressStats(timeFilter)
+    const load: Promise<ProgressData> =
+      STATS_SOURCE === 'worker'
+        ? fetchProgressStats(timeFilter)
+        : fetchAllTasks().then(({ tasks: allTasks, truncated: wasTruncated }) => {
+            if (!cancelled) {
+              setTasks(allTasks);
+              setTruncated(wasTruncated);
+            }
+            return computeProgressData(allTasks, timeFilter);
+          });
+
+    load
       .then((next) => {
         if (cancelled) return;
         setData(next);
@@ -234,6 +256,11 @@ const Progress: React.FC = () => {
         </div>
 
         {error && <p className="mb-8 text-sm text-destructive">{error}</p>}
+        {!error && truncated && (
+          <p className="mb-8 text-sm text-muted-foreground">
+            Notion has more tasks than this page could fetch in one request. Numbers below may undercount until notion-chat is deployed.
+          </p>
+        )}
 
         <div className={cn('grid grid-cols-1 gap-16 transition-opacity lg:grid-cols-[380px_1fr]', refreshing && 'opacity-60')}>
           {/* Left rail: every bare number on the page lives here, in a column
