@@ -91,6 +91,10 @@ export default {
         "float": {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" }
+        },
+        "caret-blink": {
+          "0%,70%,100%": { opacity: "1" },
+          "20%,50%": { opacity: "0" }
         }
       },
       animation: {
@@ -100,7 +104,8 @@ export default {
         "fade-in-up": "fade-in-up 0.5s ease-out",
         "slide-in": "slide-in 0.5s ease-out",
         "glow-pulse": "glow-pulse 3s ease-in-out infinite",
-        "float": "float 3s ease-in-out infinite"
+        "float": "float 3s ease-in-out infinite",
+        "caret-blink": "caret-blink 1.2s ease-out infinite"
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

@@ -11,6 +11,7 @@ import Skills from "./sections/Skills";
 import About from "./sections/About";
 import Contact from "./sections/Contact";
 import Progress from "./sections/Progress";
+import Chat from "./sections/Chat";
 
 
 const MainLayout = () => (
@@ -33,6 +34,7 @@ const App = () => (
     <Routes>
       <Route path="/" element={<MainLayout />} />
       <Route path="/progress" element={<Progress />} />
+      <Route path="/chat" element={<Chat />} />
     </Routes>
   </BrowserRouter>
 );
