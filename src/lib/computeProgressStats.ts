@@ -205,16 +205,27 @@ export function computeProgressData(taskData: NotionTask[], timeFilter: TimeFilt
     incomplete: taskData.filter((t) => t.category === cat && t.status !== 'Completed').length,
   }));
 
-  // Monthly (all-time)
+  // Monthly (all-time). Keyed by sortable 'YYYY-MM', not the display label — object
+  // key order follows insertion order, which follows Notion's return order (observed
+  // newest-first), not calendar order, so sorting by the display string alone would
+  // have been wrong too (string-sorts "Apr" before "Jan"). Sort the sortable key, then
+  // format each for display, so the chart reads oldest-to-newest left to right.
   const monthCounts: Record<string, number> = {};
   allCompleted.forEach((task) => {
     const date = task.completedDate || task.dueDate;
     if (date) {
-      const month = new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-      monthCounts[month] = (monthCounts[month] || 0) + 1;
+      const d = new Date(date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthCounts[key] = (monthCounts[key] || 0) + 1;
     }
   });
-  const monthlyData: MonthlyData[] = Object.entries(monthCounts).map(([month, tasks]) => ({ month, tasks }));
+  const monthlyData: MonthlyData[] = Object.entries(monthCounts)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, tasks]) => {
+      const [y, m] = key.split('-').map(Number);
+      const month = new Date(y, m - 1, 1).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+      return { month, tasks };
+    });
 
   // Capacity analysis
   const scheduledByDay: Record<string, number> = {};
